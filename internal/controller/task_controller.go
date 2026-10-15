@@ -99,10 +99,10 @@ func (c *TaskController) Delete(w http.ResponseWriter, r *http.Request) {
 
 // ---------- 以下是共用的小工具函式 ----------
 
-// parseID 從 URL 的 {id} 取出數字，並用 validator 檢查必須是正整數。
+// parseID 從 URL 的 {id} 取出數字，並檢查必須是正整數。
 func (c *TaskController) parseID(r *http.Request) (int, error) {
 	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || c.validate.Var(id, "gt=0") != nil {
+	if err != nil || id <= 0 {
 		return 0, response.ErrInvalidID
 	}
 	return id, nil
