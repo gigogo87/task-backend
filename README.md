@@ -4,8 +4,23 @@ A RESTful task list API written in Go, organised into middleware / controller / 
 
 ## Requirements
 
-- Go 1.27+ (the version in `go.mod`)
-- Docker (optional)
+- **Go 1.27 or later** (the version in `go.mod`), **or** just Docker — the Docker build brings its own Go toolchain, so nothing else needs to be installed.
+
+### About the Go version
+
+The project targets the latest Go release rather than the oldest one it could support:
+
+| Feature used | Minimum Go |
+|---|---|
+| `log/slog` structured logging | 1.21 |
+| `net/http` ServeMux method + path-parameter routing (`"PUT /tasks/{id}"`) | 1.22 |
+| `slog.DiscardHandler`, `tool` directive in `go.mod` (mockgen) | 1.24 |
+| Current releases of `go-playground/validator` and `golang.org/x/time` | 1.26 |
+
+What this means in practice:
+
+- **Go 1.21 or later installed:** `go run .` / `go test ./...` work as-is. With the default `GOTOOLCHAIN=auto`, Go downloads the 1.27 toolchain automatically on first use (this takes a moment once).
+- **Go 1.18 – 1.20 installed:** these versions cannot fetch a newer toolchain. Use Docker (below) or upgrade Go.
 
 ## Run
 
