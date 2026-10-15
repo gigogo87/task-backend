@@ -28,9 +28,10 @@ type DependencyProvider struct {
 	TaskService    service.TaskService
 	TaskController *controller.TaskController
 	RateLimiter    *middleware.RateLimiter
+	Router         http.Handler // 整個 HTTP API 的入口：路由 + middleware（見 router.go）
 }
 
-// NewDependencyProvider 依「由下往上」的順序建立所有元件：repository → service → controller → middleware。
+// NewDependencyProvider 依「由下往上」的順序建立所有元件：repository → service → controller → middleware → router。
 // logOut 是 log 要寫到哪裡（正式環境是 os.Stdout，測試可以傳 io.Discard）。
 func NewDependencyProvider(cfg Config, logOut io.Writer) *DependencyProvider {
 	dp := &DependencyProvider{Config: cfg}
@@ -44,13 +45,9 @@ func NewDependencyProvider(cfg Config, logOut io.Writer) *DependencyProvider {
 	dp.TaskService = service.NewTaskService(dp.TaskRepository, dp.Logger)
 	dp.TaskController = controller.NewTaskController(dp.TaskService, dp.Validator, dp.Logger)
 	dp.RateLimiter = middleware.NewRateLimiter(cfg.RateLimitRPS, cfg.RateLimitBurst)
+	dp.Router = newRouter(dp.TaskController, dp.RateLimiter)
 
 	return dp
-}
-
-// Handler 回傳掛好路由與 middleware 的完整 HTTP handler（見 router.go）。
-func (dp *DependencyProvider) Handler() http.Handler {
-	return newRouter(dp.TaskController, dp.RateLimiter)
 }
 
 // Close 釋放需要關閉的資源（目前是限流器的背景 goroutine；之後的 DB 連線池也在這裡關）。
