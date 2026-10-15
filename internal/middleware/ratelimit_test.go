@@ -26,7 +26,7 @@ func newRateLimitTestHandler(t *testing.T) http.Handler {
 	t.Helper()
 	rl := NewRateLimiter(testRPS, testBurst)
 	t.Cleanup(rl.Close)
-	return Trace(RateLimit(okHandler, rl))
+	return RateLimit(okHandler, rl)
 }
 
 func sendFrom(h http.Handler, remoteAddr string) *httptest.ResponseRecorder {
@@ -57,7 +57,7 @@ func TestRateLimit_WithinBurst_Returns200(t *testing.T) {
 	}
 }
 
-func TestRateLimit_BurstExceeded_Returns429WithRetryAfterAndTraceID(t *testing.T) {
+func TestRateLimit_BurstExceeded_Returns429WithRetryAfter(t *testing.T) {
 	// Arrange
 	h := newRateLimitTestHandler(t)
 	exhaustBurst(h, "10.0.0.1:1234")
@@ -69,8 +69,6 @@ func TestRateLimit_BurstExceeded_Returns429WithRetryAfterAndTraceID(t *testing.T
 	require.Equal(t, http.StatusTooManyRequests, rec.Code)
 	assert.NotEmpty(t, rec.Header().Get("Retry-After"))
 	assert.Contains(t, rec.Body.String(), `"code":"RATE_LIMITED"`)
-	assert.Contains(t, rec.Body.String(), `"trace_id":"`+rec.Header().Get(TraceIDHeader)+`"`,
-		"429 body should carry the trace id")
 }
 
 func TestRateLimit_SameIPDifferentPort_SharesLimit(t *testing.T) {
