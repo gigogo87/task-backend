@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"taskapi/internal/model"
@@ -56,8 +57,17 @@ func (s *taskService) Update(ctx context.Context, id int, t model.Task) (model.T
 	return updated, nil
 }
 
+// Delete 是冪等的：目的是「讓這筆 task 不存在」，所以 task 本來就不在（從沒建立過或已被刪除）也算成功。
+// 這樣 client 在逾時後重試，不會因為第一次其實已經刪除成功而收到錯誤。
+// repository 仍如實回報 ErrTaskNotFound，由這一層依業務語意決定視為成功；
+// 對照 Update：更新不存在的 task 仍然是錯誤。
 func (s *taskService) Delete(ctx context.Context, id int) error {
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err := s.repo.Delete(ctx, id)
+	if errors.Is(err, model.ErrTaskNotFound) {
+		s.logger.InfoContext(ctx, "task already absent", "task_id", id)
+		return nil
+	}
+	if err != nil {
 		return err
 	}
 	s.logger.InfoContext(ctx, "task deleted", "task_id", id)

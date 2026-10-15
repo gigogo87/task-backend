@@ -93,6 +93,34 @@ func TestHandler_TaskNotFound_ReturnsErrorWithTraceIDMatchingHeader(t *testing.T
 	assert.Equal(t, rec.Header().Get(middleware.TraceIDHeader), resp.Error.TraceID, "trace_id in body should match X-Trace-Id header")
 }
 
+// DELETE 是冪等的：重試（例如第一次的回應在網路上遺失）也要得到成功。
+func TestHandler_DeleteSameTaskTwice_Returns204BothTimes(t *testing.T) {
+	// Arrange
+	h := newTestHandler(t, generousLimits)
+	created := doRequest(t, h, http.MethodPost, "/tasks", `{"name":"x"}`)
+	require.Equal(t, http.StatusCreated, created.Code, "arrange: create task")
+
+	// Act
+	first := doRequest(t, h, http.MethodDelete, "/tasks/1", "")
+	second := doRequest(t, h, http.MethodDelete, "/tasks/1", "")
+
+	// Assert
+	assert.Equal(t, http.StatusNoContent, first.Code)
+	assert.Equal(t, http.StatusNoContent, second.Code)
+	assert.Empty(t, second.Body.String())
+}
+
+func TestHandler_DeleteNeverCreatedTask_Returns204(t *testing.T) {
+	// Arrange
+	h := newTestHandler(t, generousLimits)
+
+	// Act
+	rec := doRequest(t, h, http.MethodDelete, "/tasks/999", "")
+
+	// Assert
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+}
+
 func TestHandler_BurstExceeded_Returns429(t *testing.T) {
 	// Arrange
 	h := newTestHandler(t, Config{RateLimitRPS: 0.001, RateLimitBurst: 1})

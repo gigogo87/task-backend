@@ -275,16 +275,17 @@ func TestDelete_ExistingTask_Returns204AndPassesIDToService(t *testing.T) {
 	// id 是否正確傳給 service，由 EXPECT 的參數比對驗證
 }
 
-func TestDelete_TaskNotFound_Returns404TaskNotFound(t *testing.T) {
+// task 不存在時 service 會回 nil（Delete 是冪等的），所以 controller 只會在非預期的錯誤時失敗。
+func TestDelete_UnexpectedServiceError_Returns500(t *testing.T) {
 	// Arrange
 	f := setUp(t)
-	f.service.EXPECT().Delete(gomock.Any(), 5).Return(model.ErrTaskNotFound)
+	f.service.EXPECT().Delete(gomock.Any(), 5).Return(errors.New("storage unavailable"))
 
 	// Act
 	rec := serve(t, f.controller.Delete, "5", "")
 
 	// Assert
-	assertError(t, rec, http.StatusNotFound, "TASK_NOT_FOUND")
+	assertError(t, rec, http.StatusInternalServerError, "INTERNAL_ERROR")
 }
 
 func TestDelete_InvalidID_Returns400InvalidID(t *testing.T) {

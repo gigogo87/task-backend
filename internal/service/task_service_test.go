@@ -139,7 +139,8 @@ func TestDelete_ExistingTask_PassesIDToRepository(t *testing.T) {
 	// id 是否正確傳給 repository，由 EXPECT 的參數比對驗證
 }
 
-func TestDelete_TaskNotFound_ReturnsErrTaskNotFound(t *testing.T) {
+// Delete 是冪等的：task 本來就不在（從沒建立過或已被刪除）也算成功。
+func TestDelete_TaskNotFound_ReturnsNil(t *testing.T) {
 	// Arrange
 	f := setUp(t)
 	f.repo.EXPECT().Delete(f.ctx, 1).Return(model.ErrTaskNotFound)
@@ -148,5 +149,18 @@ func TestDelete_TaskNotFound_ReturnsErrTaskNotFound(t *testing.T) {
 	err := f.svc.Delete(f.ctx, 1)
 
 	// Assert
-	assert.ErrorIs(t, err, model.ErrTaskNotFound)
+	assert.NoError(t, err)
+}
+
+// 只有「找不到」被視為成功，其他 repository 錯誤仍要原樣往上傳。
+func TestDelete_RepositoryFails_ReturnsSameError(t *testing.T) {
+	// Arrange
+	f := setUp(t)
+	f.repo.EXPECT().Delete(f.ctx, 1).Return(errRepository)
+
+	// Act
+	err := f.svc.Delete(f.ctx, 1)
+
+	// Assert
+	assert.ErrorIs(t, err, errRepository)
 }
