@@ -30,9 +30,6 @@ func NewTaskService(repo repository.TaskRepository, logger *slog.Logger) TaskSer
 	return &taskService{repo: repo, logger: logger}
 }
 
-// 格式檢查（name 必填、status 只能 0/1）已經在 controller 用 validator 做完了。
-// 之後若有商業規則（例如 name 不能重複、已完成的任務不能改回未完成），就寫在這一層。
-
 func (s *taskService) List(ctx context.Context) ([]model.Task, error) {
 	s.logger.InfoContext(ctx, "task listed")
 	return s.repo.List(ctx)

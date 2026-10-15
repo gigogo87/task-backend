@@ -99,7 +99,7 @@ All errors use one format:
 
 | HTTP | `code` | When |
 |---|---|---|
-| 400 | `INVALID_JSON` | Malformed JSON, unknown field, wrong type, empty body |
+| 400 | `INVALID_JSON` | Malformed JSON, unknown field, wrong type, empty body, extra content after the JSON object |
 | 400 | `VALIDATION_FAILED` | Body fails validation (see `details`) |
 | 400 | `INVALID_ID` | `{id}` is not a positive integer |
 | 404 | `TASK_NOT_FOUND` | `PUT` to a task id that does not exist (`DELETE` returns `204` instead) |

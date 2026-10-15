@@ -5,6 +5,7 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -113,17 +114,29 @@ func (c *TaskController) decodeAndValidate(w http.ResponseWriter, r *http.Reques
 	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxBodyBytes))
 	dec.DisallowUnknownFields() // 多送奇怪欄位就報錯
 	if err := dec.Decode(&req); err != nil {
-		var tooLarge *http.MaxBytesError
-		if errors.As(err, &tooLarge) {
-			return dto.TaskRequest{}, response.ErrPayloadTooLarge
-		}
-		return dto.TaskRequest{}, response.ErrInvalidJSON
+		return dto.TaskRequest{}, decodeBodyError(err)
+	}
+	// Decode 只會讀第一個 JSON 值；body 後面若還有內容（例如 {"name":"x"}garbage、兩個 JSON 物件），
+	// 也視為格式錯誤。只剩空白時第二次 Decode 會回 io.EOF，代表 body 已經讀完。
+	var extra json.RawMessage
+	if err := dec.Decode(&extra); !errors.Is(err, io.EOF) {
+		return dto.TaskRequest{}, decodeBodyError(err)
 	}
 
 	if err := c.validate.Struct(req); err != nil {
 		return dto.TaskRequest{}, dto.ValidationError(err)
 	}
 	return req, nil
+}
+
+// decodeBodyError 把解析 body 時的錯誤對應成 API 錯誤：超過大小上限回 PAYLOAD_TOO_LARGE，其他（包含 nil，
+// 也就是後面多出一個合法的 JSON 值）都是 INVALID_JSON。
+func decodeBodyError(err error) error {
+	var tooLarge *http.MaxBytesError
+	if errors.As(err, &tooLarge) {
+		return response.ErrPayloadTooLarge
+	}
+	return response.ErrInvalidJSON
 }
 
 // fail 回傳錯誤回應。非預期的錯誤（不是 AppError）先寫進 log，因為回給 client 的只有 "internal server error"。

@@ -99,7 +99,7 @@ Body 規則：`name` 為必填，最多 100 字元；`status` 可省略，只能
 
 | HTTP | `code` | 發生情境 |
 |---|---|---|
-| 400 | `INVALID_JSON` | JSON 格式錯誤、有未定義的欄位、型別錯誤、body 為空 |
+| 400 | `INVALID_JSON` | JSON 格式錯誤、有未定義的欄位、型別錯誤、body 為空、JSON 物件後面還有多餘內容 |
 | 400 | `VALIDATION_FAILED` | body 驗證失敗（見 `details`） |
 | 400 | `INVALID_ID` | `{id}` 不是正整數 |
 | 404 | `TASK_NOT_FOUND` | `PUT` 的任務 id 不存在（`DELETE` 則是回 `204`） |

@@ -175,6 +175,9 @@ func TestCreate_MalformedBody_Returns400InvalidJSON(t *testing.T) {
 		{"empty body", ``},
 		{"unknown field", `{"name":"x","foo":1}`},
 		{"wrong field type", `{"name":"x","status":"1"}`},
+		{"trailing garbage", `{"name":"x"}garbage`},
+		{"two JSON objects", `{"name":"x"}{"name":"y"}`},
+		{"trailing closing brace", `{"name":"x"}}`},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -188,6 +191,34 @@ func TestCreate_MalformedBody_Returns400InvalidJSON(t *testing.T) {
 			assertError(t, rec, http.StatusBadRequest, "INVALID_JSON")
 		})
 	}
+}
+
+// 只多出空白（例如 client 習慣在結尾加換行）不算多餘內容，要正常接受。
+func TestCreate_TrailingWhitespace_Returns201(t *testing.T) {
+	// Arrange
+	f := setUp(t)
+	f.service.EXPECT().
+		Create(gomock.Any(), model.Task{Name: "x", Status: model.StatusIncomplete}).
+		Return(model.Task{ID: 1, Name: "x", Status: model.StatusIncomplete}, nil)
+
+	// Act
+	rec := serve(t, f.controller.Create, "", "{\"name\":\"x\"}\n \t\r\n")
+
+	// Assert
+	assert.Equal(t, http.StatusCreated, rec.Code)
+}
+
+// 前面是合法的 JSON，但後面多出的內容讓 body 超過上限：檢查多餘內容時也要回 413，而不是 INVALID_JSON。
+func TestCreate_TrailingDataOver1MB_Returns413PayloadTooLarge(t *testing.T) {
+	// Arrange
+	f := setUp(t)
+	body := `{"name":"x"}` + strings.Repeat(" ", maxBodyBytes)
+
+	// Act
+	rec := serve(t, f.controller.Create, "", body)
+
+	// Assert
+	assertError(t, rec, http.StatusRequestEntityTooLarge, "PAYLOAD_TOO_LARGE")
 }
 
 func TestCreate_BodyOver1MB_Returns413PayloadTooLarge(t *testing.T) {

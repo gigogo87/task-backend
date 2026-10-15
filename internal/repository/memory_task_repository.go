@@ -30,12 +30,11 @@ func NewMemoryTaskRepository() *MemoryTaskRepository {
 }
 
 // List 回傳所有任務，依 ID 排序（map 的順序是隨機的，排序後結果才穩定、好測試）。
-// ctx 在記憶體實作中用不到，但換成 DB 時要拿來傳遞取消與逾時。
 func (r *MemoryTaskRepository) List(_ context.Context) ([]model.Task, error) {
 	r.mu.RLock() // 讀取用讀鎖，多個讀者可以同時讀
 	defer r.mu.RUnlock()
 
-	result := make([]model.Task, 0, len(r.tasks)) // 用 make 而不是 nil，JSON 才會是 [] 而不是 null
+	result := make([]model.Task, 0, len(r.tasks))
 	for _, t := range r.tasks {
 		result = append(result, t)
 	}

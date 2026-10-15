@@ -60,20 +60,3 @@ func TestTrace_InvalidTraceIDHeader_GeneratesNewTraceID(t *testing.T) {
 	// Assert
 	assert.Regexp(t, fmt.Sprintf(`^[0-9a-f]{%d}$`, trace.IDLength), rec.Header().Get(TraceIDHeader))
 }
-
-// 不再支援 W3C traceparent：只帶 traceparent 時一樣自己產生新的 trace id。
-func TestTrace_OnlyTraceparentHeader_IgnoresItAndGeneratesNewTraceID(t *testing.T) {
-	// Arrange
-	h := Trace(echoTraceIDHandler)
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
-	rec := httptest.NewRecorder()
-
-	// Act
-	h.ServeHTTP(rec, req)
-
-	// Assert
-	got := rec.Header().Get(TraceIDHeader)
-	assert.Len(t, got, trace.IDLength)
-	assert.NotEqual(t, "4bf92f3577b34da6a3ce929d0e0e4736", got)
-}

@@ -110,10 +110,8 @@ func TestUpdate_ValidTask_PassesIDAndTaskToRepository(t *testing.T) {
 	// Assert
 	require.NoError(t, err)
 	assert.Equal(t, model.Task{ID: 7, Name: "new", Status: model.StatusComplete}, got)
-	// id 與 task 是否正確傳給 repository，由 EXPECT 的參數比對驗證
 }
 
-// repository 回傳的錯誤要原封不動往上傳，controller 才能對應到正確的錯誤碼。
 func TestUpdate_TaskNotFound_ReturnsErrTaskNotFound(t *testing.T) {
 	// Arrange
 	f := setUp(t)
@@ -136,7 +134,6 @@ func TestDelete_ExistingTask_PassesIDToRepository(t *testing.T) {
 
 	// Assert
 	assert.NoError(t, err)
-	// id 是否正確傳給 repository，由 EXPECT 的參數比對驗證
 }
 
 // Delete 是冪等的：task 本來就不在（從沒建立過或已被刪除）也算成功。
