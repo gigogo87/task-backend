@@ -4,7 +4,7 @@ package dto
 
 import "taskapi/internal/model"
 
-// TaskRequest 是 POST /task 與 PUT /task/{id} 的 body 格式。client 不能自己指定 id。
+// TaskRequest 是 POST /tasks 與 PUT /tasks/{id} 的 body 格式。client 不能自己指定 id。
 //
 // Status 用 *int 而不是 int：validator 的 required 會把 0 當成「沒填」，
 // 但 0（未完成）是合法值，用指標才分得出「沒傳」和「傳了 0」。

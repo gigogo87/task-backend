@@ -45,9 +45,9 @@ A task looks like `{"id": 1, "name": "buy milk", "status": 0}`, where `status` i
 | Method | Path | Body | Success |
 |---|---|---|---|
 | GET | `/tasks` | – | `200` `{"result": [Task, ...]}` |
-| POST | `/task` | `{"name": "...", "status": 0}` | `201` `{"result": Task}` |
-| PUT | `/task/{id}` | `{"name": "...", "status": 1}` | `200` `{"result": Task}` |
-| DELETE | `/task/{id}` | – | `204` |
+| POST | `/tasks` | `{"name": "...", "status": 0}` | `201` `{"result": Task}` |
+| PUT | `/tasks/{id}` | `{"name": "...", "status": 1}` | `200` `{"result": Task}` |
+| DELETE | `/tasks/{id}` | – | `204` |
 
 Body rules: `name` is required, at most 100 characters; `status` is optional, `0` or `1`, defaulting to `0`. `PUT` replaces the whole task, so omitting `status` sets it back to `0`. Unknown fields are rejected and the body is limited to 1 MB.
 

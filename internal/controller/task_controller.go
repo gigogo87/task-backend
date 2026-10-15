@@ -41,7 +41,7 @@ func (c *TaskController) List(w http.ResponseWriter, r *http.Request) {
 	response.WriteJSON(w, http.StatusOK, map[string]any{"result": tasks})
 }
 
-// Create 處理 POST /task
+// Create 處理 POST /tasks
 func (c *TaskController) Create(w http.ResponseWriter, r *http.Request) {
 	c.logger.InfoContext(r.Context(), "[CTR IN] Create")
 	req, err := c.decodeAndValidate(w, r)
@@ -58,7 +58,7 @@ func (c *TaskController) Create(w http.ResponseWriter, r *http.Request) {
 	response.WriteJSON(w, http.StatusCreated, map[string]any{"result": created})
 }
 
-// Update 處理 PUT /task/{id}
+// Update 處理 PUT /tasks/{id}
 func (c *TaskController) Update(w http.ResponseWriter, r *http.Request) {
 	c.logger.InfoContext(r.Context(), "[CTR IN] Update")
 	id, err := c.parseID(r)
@@ -80,7 +80,7 @@ func (c *TaskController) Update(w http.ResponseWriter, r *http.Request) {
 	response.WriteJSON(w, http.StatusOK, map[string]any{"result": updated})
 }
 
-// Delete 處理 DELETE /task/{id}
+// Delete 處理 DELETE /tasks/{id}
 func (c *TaskController) Delete(w http.ResponseWriter, r *http.Request) {
 	c.logger.InfoContext(r.Context(), "[CTR IN] Delete")
 	id, err := c.parseID(r)

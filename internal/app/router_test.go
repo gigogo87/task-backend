@@ -24,9 +24,8 @@ func TestNewRouter_WrongMethod_Returns405WithAllowHeader(t *testing.T) {
 	tests := []struct {
 		method, path, wantAllow string
 	}{
-		{http.MethodPost, "/tasks", "GET, HEAD"},
-		{http.MethodGet, "/task", "POST"},
-		{http.MethodGet, "/task/1", "DELETE, PUT"}, // ServeMux 依字母排序
+		{http.MethodPatch, "/tasks", "GET, HEAD, POST"}, // ServeMux 依字母排序
+		{http.MethodGet, "/tasks/1", "DELETE, PUT"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.method+" "+tc.path, func(t *testing.T) {

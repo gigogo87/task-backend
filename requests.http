@@ -2,13 +2,13 @@
 ### 先確定 server 已經在跑（執行 main.go）
 
 ### 1. 新增任務
-POST http://localhost:8080/task
+POST http://localhost:8080/tasks
 Content-Type: application/json
 
 {"name": "買牛奶"}
 
 ### 2. 再新增一筆
-POST http://localhost:8080/task
+POST http://localhost:8080/tasks
 Content-Type: application/json
 
 {"name": "寫作業"}
@@ -17,28 +17,28 @@ Content-Type: application/json
 GET http://localhost:8080/tasks
 
 ### 4. 把 id=1 標記為完成
-PUT http://localhost:8080/task/1
+PUT http://localhost:8080/tasks/1
 Content-Type: application/json
 
 {"name": "買牛奶", "status": 1}
 
 ### 5. 刪除 id=2
-DELETE http://localhost:8080/task/2
+DELETE http://localhost:8080/tasks/2
 
 ### 6. 錯誤情境：更新不存在的任務 → 404
-PUT http://localhost:8080/task/999
+PUT http://localhost:8080/tasks/999
 Content-Type: application/json
 
 {"name": "x"}
 
 ### 7. 錯誤情境：name 是空的、status 不合法 → 400 VALIDATION_FAILED，details 會列出兩個欄位
-POST http://localhost:8080/task
+POST http://localhost:8080/tasks
 Content-Type: application/json
 
 {"name": "", "status": 5}
 
 ### 8. 帶 X-Trace-Id：回應的 X-Trace-Id 與錯誤裡的 trace_id 會沿用 my-trace-123
-PUT http://localhost:8080/task/999
+PUT http://localhost:8080/tasks/999
 Content-Type: application/json
 X-Trace-Id: my-trace-123
 

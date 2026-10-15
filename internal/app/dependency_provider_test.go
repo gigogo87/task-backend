@@ -41,10 +41,10 @@ func TestHandler_CreateUpdateDeleteSequence_ListReturnsRemainingTask(t *testing.
 		method, path, body string
 		wantStatus         int
 	}{
-		{http.MethodPost, "/task", `{"name":"買牛奶"}`, http.StatusCreated},
-		{http.MethodPost, "/task", `{"name":"寫作業"}`, http.StatusCreated},
-		{http.MethodPut, "/task/1", `{"name":"買牛奶","status":1}`, http.StatusOK},
-		{http.MethodDelete, "/task/2", "", http.StatusNoContent},
+		{http.MethodPost, "/tasks", `{"name":"買牛奶"}`, http.StatusCreated},
+		{http.MethodPost, "/tasks", `{"name":"寫作業"}`, http.StatusCreated},
+		{http.MethodPut, "/tasks/1", `{"name":"買牛奶","status":1}`, http.StatusOK},
+		{http.MethodDelete, "/tasks/2", "", http.StatusNoContent},
 	}
 	for _, s := range steps {
 		rec := doRequest(t, h, s.method, s.path, s.body)
@@ -75,7 +75,7 @@ func TestHandler_TaskNotFound_ReturnsErrorWithTraceIDMatchingHeader(t *testing.T
 	h := newTestHandler(t, generousLimits)
 
 	// Act
-	rec := doRequest(t, h, http.MethodPut, "/task/999", `{"name":"x"}`)
+	rec := doRequest(t, h, http.MethodPut, "/tasks/999", `{"name":"x"}`)
 
 	// Assert
 	require.Equal(t, http.StatusNotFound, rec.Code)
