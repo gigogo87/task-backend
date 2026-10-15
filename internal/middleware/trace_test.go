@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -27,7 +28,7 @@ func TestTrace_NoTraceIDHeader_GeneratesTraceIDInHeaderAndContext(t *testing.T) 
 
 	// Assert
 	id := rec.Header().Get(TraceIDHeader)
-	require.Len(t, id, 32)
+	require.Len(t, id, trace.IDLength)
 	assert.Equal(t, id, rec.Body.String(), "trace id in context should match header")
 }
 
@@ -57,7 +58,7 @@ func TestTrace_InvalidTraceIDHeader_GeneratesNewTraceID(t *testing.T) {
 	h.ServeHTTP(rec, req)
 
 	// Assert
-	assert.Regexp(t, `^[0-9a-f]{32}$`, rec.Header().Get(TraceIDHeader))
+	assert.Regexp(t, fmt.Sprintf(`^[0-9a-f]{%d}$`, trace.IDLength), rec.Header().Get(TraceIDHeader))
 }
 
 // 不再支援 W3C traceparent：只帶 traceparent 時一樣自己產生新的 trace id。
@@ -73,6 +74,6 @@ func TestTrace_OnlyTraceparentHeader_IgnoresItAndGeneratesNewTraceID(t *testing.
 
 	// Assert
 	got := rec.Header().Get(TraceIDHeader)
-	assert.Len(t, got, 32)
+	assert.Len(t, got, trace.IDLength)
 	assert.NotEqual(t, "4bf92f3577b34da6a3ce929d0e0e4736", got)
 }

@@ -42,7 +42,7 @@ func RouteErrors(next Router) http.Handler {
 // statusRecorder 只記錄 status 與 header，丟掉 body（我們要換成 JSON）。
 type statusRecorder struct {
 	header http.Header
-	status int
+	status int // 0 代表還沒寫入 status
 }
 
 func (s *statusRecorder) Header() http.Header { return s.header }

@@ -18,11 +18,14 @@ type MemoryTaskRepository struct {
 	nextID int
 }
 
+// firstTaskID 是第一筆任務的 ID；之後每新增一筆就加 1（概念同 DB 的 auto increment）。
+const firstTaskID = 1
+
 // NewMemoryTaskRepository 建立一個空的 MemoryTaskRepository。Go 慣例用 NewXxx 當建構函式。
 func NewMemoryTaskRepository() *MemoryTaskRepository {
 	return &MemoryTaskRepository{
 		tasks:  make(map[int]model.Task),
-		nextID: 1,
+		nextID: firstTaskID,
 	}
 }
 

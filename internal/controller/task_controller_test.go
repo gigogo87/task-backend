@@ -143,6 +143,7 @@ func TestCreate_InvalidFields_Returns400WithFieldDetails(t *testing.T) {
 			[]model.FieldError{{Field: "name", Reason: "required"}}},
 		{"empty name", `{"name":""}`,
 			[]model.FieldError{{Field: "name", Reason: "required"}}},
+		// 101 與 "100" 對應 dto.TaskRequest 的 validate tag `max=100`（tag 無法引用常數，改規則時兩邊要一起改）
 		{"name too long", `{"name":"` + strings.Repeat("a", 101) + `"}`,
 			[]model.FieldError{{Field: "name", Reason: "max", Param: "100"}}},
 		{"status out of range", `{"name":"x","status":5}`,

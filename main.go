@@ -14,6 +14,14 @@ import (
 	"taskapi/internal/app"
 )
 
+const (
+	// readHeaderTimeout 是讀取請求 header 的上限，避免 client 故意慢慢送 header 佔住連線（Slowloris 攻擊）。
+	readHeaderTimeout = 5 * time.Second
+	// shutdownTimeout 是優雅關閉時最多等待處理中請求的時間。
+	// 要比平台送 SIGKILL 前的寬限期短（docker stop 預設 10 秒），關閉流程才跑得完。
+	shutdownTimeout = 5 * time.Second
+)
+
 func main() {
 	// 1. 讀設定：PORT、RATE_LIMIT_RPS、RATE_LIMIT_BURST 都可以用環境變數覆蓋
 	cfg, err := app.LoadConfig()
@@ -29,7 +37,7 @@ func main() {
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           dp.Handler(),
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: readHeaderTimeout,
 		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
@@ -48,7 +56,7 @@ func main() {
 	<-quit
 
 	logger.Info("shutting down...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.Error("shutdown error", "error", err)

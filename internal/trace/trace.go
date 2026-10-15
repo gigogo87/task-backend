@@ -21,9 +21,15 @@ func FromContext(ctx context.Context) string {
 	return id
 }
 
-// NewID 產生一個隨機的 trace id（16 bytes → 32 字元小寫 hex）。
+// traceIDBytes 是產生 trace id 用的隨機位元組數。
+const traceIDBytes = 16
+
+// IDLength 是 NewID 產生的 trace id 長度：每個位元組編碼成 2 個 hex 字元。
+const IDLength = traceIDBytes * 2
+
+// NewID 產生一個隨機的 trace id（IDLength 個小寫 hex 字元）。
 func NewID() string {
-	var b [16]byte
+	var b [traceIDBytes]byte
 	_, _ = rand.Read(b[:]) // crypto/rand.Read 不會回傳錯誤
 	return hex.EncodeToString(b[:])
 }

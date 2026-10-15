@@ -23,8 +23,8 @@ func TestCreate_NewTasks_AssignsSequentialIDs(t *testing.T) {
 	// Assert
 	require.NoError(t, err1)
 	require.NoError(t, err2)
-	assert.Equal(t, 1, first.ID)
-	assert.Equal(t, 2, second.ID)
+	assert.Equal(t, firstTaskID, first.ID)
+	assert.Equal(t, firstTaskID+1, second.ID)
 }
 
 func TestList_MultipleTasks_ReturnsSortedByID(t *testing.T) {
@@ -40,7 +40,12 @@ func TestList_MultipleTasks_ReturnsSortedByID(t *testing.T) {
 
 	// Assert
 	require.NoError(t, err)
-	assert.Equal(t, []model.Task{{ID: 1, Name: "a"}, {ID: 2, Name: "b"}, {ID: 3, Name: "c"}}, got)
+	want := []model.Task{
+		{ID: firstTaskID, Name: "a"},
+		{ID: firstTaskID + 1, Name: "b"},
+		{ID: firstTaskID + 2, Name: "c"},
+	}
+	assert.Equal(t, want, got)
 }
 
 func TestList_NoTasks_ReturnsEmptyNonNilSlice(t *testing.T) {
@@ -110,12 +115,13 @@ func TestDelete_NonExistentID_ReturnsErrTaskNotFound(t *testing.T) {
 // 配合 `go test -race` 可抓出沒加鎖的問題。
 func TestCreate_ConcurrentCalls_StoresAllTasks(t *testing.T) {
 	// Arrange
+	const goroutines = 100
 	ctx := context.Background()
 	r := NewMemoryTaskRepository()
 	var wg sync.WaitGroup
 
 	// Act
-	for i := 0; i < 100; i++ {
+	for i := 0; i < goroutines; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -126,5 +132,5 @@ func TestCreate_ConcurrentCalls_StoresAllTasks(t *testing.T) {
 
 	// Assert
 	got, _ := r.List(ctx)
-	assert.Len(t, got, 100)
+	assert.Len(t, got, goroutines)
 }

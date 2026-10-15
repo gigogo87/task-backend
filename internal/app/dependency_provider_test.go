@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -34,28 +35,41 @@ func doRequest(t *testing.T, h http.Handler, method, path, body string) *httptes
 	return rec
 }
 
-func TestHandler_CreateUpdateDeleteSequence_ListReturnsRemainingTask(t *testing.T) {
+// createTask 透過 API 新增一筆任務，回傳 server 指派的 id。
+// 整合測試從回應取得 id，而不是假設 id 從幾開始，就像真正的 client 一樣。
+func createTask(t *testing.T, h http.Handler, name string) int {
+	t.Helper()
+	rec := doRequest(t, h, http.MethodPost, "/tasks", fmt.Sprintf(`{"name":%q}`, name))
+	require.Equal(t, http.StatusCreated, rec.Code, "create task, body: %s", rec.Body.String())
+	var resp struct {
+		Result struct {
+			ID int `json:"id"`
+		} `json:"result"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	return resp.Result.ID
+}
+
+func taskPath(id int) string {
+	return fmt.Sprintf("/tasks/%d", id)
+}
+
+func TestHandler_CreateUpdateDeleteThenList_ReturnsRemainingTask(t *testing.T) {
 	// Arrange
 	h := newTestHandler(t, generousLimits)
-	steps := []struct {
-		method, path, body string
-		wantStatus         int
-	}{
-		{http.MethodPost, "/tasks", `{"name":"買牛奶"}`, http.StatusCreated},
-		{http.MethodPost, "/tasks", `{"name":"寫作業"}`, http.StatusCreated},
-		{http.MethodPut, "/tasks/1", `{"name":"買牛奶","status":1}`, http.StatusOK},
-		{http.MethodDelete, "/tasks/2", "", http.StatusNoContent},
-	}
-	for _, s := range steps {
-		rec := doRequest(t, h, s.method, s.path, s.body)
-		require.Equal(t, s.wantStatus, rec.Code, "arrange %s %s, body: %s", s.method, s.path, rec.Body.String())
-	}
+	milkID := createTask(t, h, "買牛奶")
+	homeworkID := createTask(t, h, "寫作業")
+	updated := doRequest(t, h, http.MethodPut, taskPath(milkID), `{"name":"買牛奶","status":1}`)
+	require.Equal(t, http.StatusOK, updated.Code, "arrange: update, body: %s", updated.Body.String())
+	deleted := doRequest(t, h, http.MethodDelete, taskPath(homeworkID), "")
+	require.Equal(t, http.StatusNoContent, deleted.Code, "arrange: delete")
 
 	// Act
 	rec := doRequest(t, h, http.MethodGet, "/tasks", "")
 
 	// Assert
-	assert.JSONEq(t, `{"result":[{"id":1,"name":"買牛奶","status":1}]}`, rec.Body.String())
+	want := fmt.Sprintf(`{"result":[{"id":%d,"name":"買牛奶","status":1}]}`, milkID)
+	assert.JSONEq(t, want, rec.Body.String())
 }
 
 func TestHandler_SuccessfulRequest_SetsTraceIDHeader(t *testing.T) {
@@ -97,12 +111,11 @@ func TestHandler_TaskNotFound_ReturnsErrorWithTraceIDMatchingHeader(t *testing.T
 func TestHandler_DeleteSameTaskTwice_Returns204BothTimes(t *testing.T) {
 	// Arrange
 	h := newTestHandler(t, generousLimits)
-	created := doRequest(t, h, http.MethodPost, "/tasks", `{"name":"x"}`)
-	require.Equal(t, http.StatusCreated, created.Code, "arrange: create task")
+	id := createTask(t, h, "x")
 
 	// Act
-	first := doRequest(t, h, http.MethodDelete, "/tasks/1", "")
-	second := doRequest(t, h, http.MethodDelete, "/tasks/1", "")
+	first := doRequest(t, h, http.MethodDelete, taskPath(id), "")
+	second := doRequest(t, h, http.MethodDelete, taskPath(id), "")
 
 	// Assert
 	assert.Equal(t, http.StatusNoContent, first.Code)
