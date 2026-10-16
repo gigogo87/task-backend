@@ -17,8 +17,8 @@ func TestCreate_NewTasks_AssignsSequentialIDs(t *testing.T) {
 	r := NewMemoryTaskRepository()
 
 	// Act
-	first, err1 := r.Create(ctx, model.Task{Name: "買牛奶"})
-	second, err2 := r.Create(ctx, model.Task{Name: "寫作業"})
+	first, err1 := r.Create(ctx, model.Task{Name: "Preview PR"})
+	second, err2 := r.Create(ctx, model.Task{Name: "Write release notes"})
 
 	// Assert
 	require.NoError(t, err1)

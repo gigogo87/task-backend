@@ -122,15 +122,15 @@ func TestCreate_ValidBody_Returns201AndPassesTaskToService(t *testing.T) {
 	// Arrange
 	f := setUp(t)
 	f.service.EXPECT().
-		Create(gomock.Any(), model.Task{Name: "買牛奶", Status: model.StatusIncomplete}).
-		Return(model.Task{ID: 1, Name: "買牛奶", Status: model.StatusIncomplete}, nil)
+		Create(gomock.Any(), model.Task{Name: "Preview PR", Status: model.StatusIncomplete}).
+		Return(model.Task{ID: 1, Name: "Preview PR", Status: model.StatusIncomplete}, nil)
 
 	// Act
-	rec := serve(t, f.controller.Create, "", `{"name":"買牛奶"}`)
+	rec := serve(t, f.controller.Create, "", `{"name":"Preview PR"}`)
 
 	// Assert
 	require.Equal(t, http.StatusCreated, rec.Code, "body: %s", rec.Body.String())
-	assert.JSONEq(t, `{"result":{"id":1,"name":"買牛奶","status":0}}`, rec.Body.String())
+	assert.JSONEq(t, `{"result":{"id":1,"name":"Preview PR","status":0}}`, rec.Body.String())
 }
 
 func TestCreate_InvalidFields_Returns400WithFieldDetails(t *testing.T) {

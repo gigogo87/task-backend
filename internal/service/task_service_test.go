@@ -75,15 +75,15 @@ func TestList_RepositoryFails_ReturnsSameError(t *testing.T) {
 func TestCreate_ValidTask_ReturnsTaskWithRepositoryID(t *testing.T) {
 	// Arrange
 	f := setUp(t)
-	input := model.Task{Name: "買牛奶"}
-	f.repo.EXPECT().Create(f.ctx, input).Return(model.Task{ID: 42, Name: "買牛奶"}, nil)
+	input := model.Task{Name: "Preview PR"}
+	f.repo.EXPECT().Create(f.ctx, input).Return(model.Task{ID: 42, Name: "Preview PR"}, nil)
 
 	// Act
 	got, err := f.svc.Create(f.ctx, input)
 
 	// Assert
 	require.NoError(t, err)
-	assert.Equal(t, model.Task{ID: 42, Name: "買牛奶"}, got)
+	assert.Equal(t, model.Task{ID: 42, Name: "Preview PR"}, got)
 }
 
 func TestCreate_RepositoryFails_ReturnsSameError(t *testing.T) {

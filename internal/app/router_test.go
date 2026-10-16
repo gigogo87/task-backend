@@ -71,18 +71,18 @@ func errorCode(t *testing.T, body []byte) string {
 func TestNewRouter_CreateUpdateDeleteThenList_ReturnsRemainingTask(t *testing.T) {
 	// Arrange
 	h := newTestRouter(t, generousLimits)
-	milkID := createTask(t, h, "買牛奶")
-	homeworkID := createTask(t, h, "寫作業")
-	updated := doRequest(t, h, http.MethodPut, taskPath(milkID), `{"name":"買牛奶","status":1}`)
+	previewID := createTask(t, h, "Preview PR")
+	notesID := createTask(t, h, "Write release notes")
+	updated := doRequest(t, h, http.MethodPut, taskPath(previewID), `{"name":"Preview PR","status":1}`)
 	require.Equal(t, http.StatusOK, updated.Code, "arrange: update, body: %s", updated.Body.String())
-	deleted := doRequest(t, h, http.MethodDelete, taskPath(homeworkID), "")
+	deleted := doRequest(t, h, http.MethodDelete, taskPath(notesID), "")
 	require.Equal(t, http.StatusNoContent, deleted.Code, "arrange: delete")
 
 	// Act
 	rec := doRequest(t, h, http.MethodGet, "/tasks", "")
 
 	// Assert
-	want := fmt.Sprintf(`{"result":[{"id":%d,"name":"買牛奶","status":1}]}`, milkID)
+	want := fmt.Sprintf(`{"result":[{"id":%d,"name":"Preview PR","status":1}]}`, previewID)
 	assert.JSONEq(t, want, rec.Body.String())
 }
 

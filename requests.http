@@ -5,13 +5,13 @@
 POST http://localhost:8080/tasks
 Content-Type: application/json
 
-{"name": "買牛奶"}
+{"name": "Preview PR"}
 
 ### 2. 再新增一筆
 POST http://localhost:8080/tasks
 Content-Type: application/json
 
-{"name": "寫作業"}
+{"name": "Write release notes"}
 
 ### 3. 列出全部
 GET http://localhost:8080/tasks
@@ -20,7 +20,7 @@ GET http://localhost:8080/tasks
 PUT http://localhost:8080/tasks/1
 Content-Type: application/json
 
-{"name": "買牛奶", "status": 1}
+{"name": "Preview PR", "status": 1}
 
 ### 5. 刪除 id=2
 DELETE http://localhost:8080/tasks/2
