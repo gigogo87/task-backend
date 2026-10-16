@@ -1,0 +1,25 @@
+version: "2"
+
+linters:
+  # standard = errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - gosec # security issues, e.g. G112 for an http.Server without ReadHeaderTimeout
+    - revive # style and naming
+    - misspell # common spelling mistakes in comments and strings
+    - errorlint # error comparisons that break with wrapped errors
+    - bodyclose # HTTP response bodies that are never closed
+    - unconvert # unnecessary type conversions
+  exclusions:
+    # Skip generated code such as the mockgen mocks.
+    generated: lax
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      # Group this module's own imports separately from third-party ones.
+      local-prefixes:
+        - taskapi
