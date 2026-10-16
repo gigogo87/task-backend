@@ -1,4 +1,4 @@
-# Task List API
+# Task API Application
 
 [English](README.md) | 繁體中文
 
@@ -140,6 +140,7 @@ internal/
 - **無狀態的水平擴展**：資料改存資料庫（並為 `GET /tasks` 加上分頁），限流狀態改放 Redis，讓多個 instance 能在 load balancer 後面運作。
 - **安全性**：驗證身分提供者發出的 JWT 來做身分驗證；授權則在 middleware 檢查角色，在 service 層檢查資料的擁有者。
 - **穩定性**：提供 `/health/live`、`/health/ready` 讓 Kubernetes 判斷 instance 是否需要重啟、能否接流量。
+- **維運**：提供處理線上客戶問題用的內部管理 API（例如修正或還原任務資料），與對外 API 分開、只限管理者角色使用，並記錄稽核 log。
 - **可觀測性**：stdout 的 log 收集到 Loki，提供 Prometheus metrics，加入 OpenTelemetry 追蹤，並在 Grafana 中以 trace id 串連，搭配告警。
 - **CI/CD**：CI 執行 lint、`go test -race`、漏洞與 image 掃描；Kubernetes 設定用 Helm，其他基礎設施用 Terraform。
 - **測試與文件**：除了現有的函式單元測試（L0），再加入連接真實資料庫的 L1 測試（資料庫使用另外準備的 container），以及 OpenAPI 規格。

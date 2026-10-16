@@ -1,4 +1,4 @@
-# Task List API
+# Task API Application
 
 English | [繁體中文](README_TW.md)
 
@@ -140,6 +140,7 @@ Request path: `[middleware: Trace → RateLimit → RouteErrors] → router → 
 - **Stateless scale-out**: move storage to a database (with pagination on `GET /tasks`) and rate-limit state to Redis, so multiple instances can run behind a load balancer.
 - **Security**: authentication by validating JWTs from an identity provider, and authorization with role checks in middleware and ownership checks in the service layer.
 - **Reliability**: `/health/live` and `/health/ready` endpoints so Kubernetes can tell whether an instance needs a restart and whether it can take traffic.
+- **Operations**: internal admin APIs for fixing customer issues in production (e.g. correcting or restoring task data), separated from the public API, restricted to an admin role, and audit-logged.
 - **Observability**: ship stdout logs to Loki, expose Prometheus metrics, and add OpenTelemetry tracing, all correlated by trace id in Grafana with alerting.
 - **CI/CD**: lint, `go test -race`, vulnerability and image scanning in CI; Helm for Kubernetes and Terraform for the rest of the infrastructure.
 - **Testing and docs**: on top of the current unit tests (L0), add L1 tests that run against a real database in a dedicated container, and an OpenAPI spec.
