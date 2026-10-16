@@ -2,33 +2,27 @@
 
 [English](README.md) | 繁體中文
 
-以 Go 撰寫的 RESTful 任務清單 API，分為 middleware / controller / service / repository 四層，並透過建構函式注入依賴（dependency injection）。
+以 Go 撰寫的 RESTful 任務清單 API，使用標準庫的 `net/http`（不使用 web 框架），分為 middleware / controller / service / repository 四層，並透過建構函式注入依賴（dependency injection）。
 
 ## 環境需求
 
-- **Go 1.27 以上**（`go.mod` 指定的版本），**或**只要有 Docker：Docker 建置時會自帶 Go 工具鏈，不需要另外安裝任何東西。
-
-### 關於 Go 版本
-
-本專案選擇使用最新的 Go 版本，而不是遷就能支援的最舊版本：
-
-| 使用的功能 | 最低 Go 版本 |
-|---|---|
-| `log/slog` 結構化 log | 1.21 |
-| `net/http` ServeMux 的「方法 + 路徑參數」路由（`"PUT /tasks/{id}"`） | 1.22 |
-| `slog.DiscardHandler`、`go.mod` 的 `tool` 指令（mockgen） | 1.24 |
-| `go-playground/validator` 與 `golang.org/x/time` 的目前版本 | 1.26 |
-
-實際影響：
-
-- **已安裝 Go 1.21 以上：** `go run .`、`go test ./...` 可以直接執行。在預設的 `GOTOOLCHAIN=auto` 下，Go 會在第一次使用時自動下載 1.27 工具鏈（只有第一次會花一點時間）。
-- **已安裝 Go 1.18～1.20：** 這些版本無法自動下載較新的工具鏈，請改用 Docker（見下方）或升級 Go。
+- **Docker**：建置 image 時會自帶 Go 工具鏈，不需要另外安裝任何東西；**或**
+- **Go 1.27 以上**，因為程式用到 `net/http` 的「方法 + 路徑」路由、`log/slog`，以及各依賴套件的目前版本。
 
 ## 執行
 
 ```bash
+docker build -t taskapi .
+docker run --rm -p 8080:8080 taskapi
+```
+
+### 不使用 Docker
+
+```bash
 go run .
 ```
+
+### 設定
 
 | 環境變數 | 預設值 | 說明 |
 |---|---|---|
@@ -36,30 +30,30 @@ go run .
 | `RATE_LIMIT_RPS` | `10` | 每個 client IP 每秒可發送的請求數 |
 | `RATE_LIMIT_BURST` | `20` | 每個 client IP 瞬間最多可連續發送的請求數 |
 
-設定值不合法時，server 會在啟動時直接結束。log 以 JSON 格式逐行輸出到 stdout，與請求相關的 log 會帶有 `trace_id`。
-
-### 使用 Docker
-
-```bash
-docker build -t taskapi .
-docker run --rm -p 8080:8080 taskapi
-```
+使用 Docker 時用 `-e` 傳入，例如 `docker run --rm -p 8080:8080 -e RATE_LIMIT_RPS=5 taskapi`。設定值不合法時，server 會在啟動時直接結束。log 以 JSON 格式逐行輸出到 stdout，與請求相關的 log 會帶有 `trace_id`。
 
 ## 測試
 
 ```bash
 go test ./...                 # 執行所有測試
 go test -race -cover ./...    # 加上 race detector（需要 cgo）與覆蓋率
-go generate ./...             # 修改 interface 後重新產生 mock
 ```
-
-service 與 controller 的測試使用 [mockgen](https://github.com/uber-go/mock) 依 `TaskRepository`、`TaskService` 兩個 interface 產生的 mock（產生在 `internal/repository/mocks` 與 `internal/service/mocks`）。mockgen 以 `tool` 依賴的形式記錄在 `go.mod`，所以 `go generate` 會使用固定的版本，不需要另外安裝。產生的檔案有一併 commit，請勿手動修改。
 
 慣例：斷言使用 [testify](https://github.com/stretchr/testify)（前提條件用 `require`，其餘用 `assert`），測試名稱採用 `Test<函式>_<情境>_<預期結果>` 格式，每個測試分為 Arrange / Act / Assert 三段。
 
+### Mock
+
+service 與 controller 的測試使用 [mockgen](https://github.com/uber-go/mock) 依 `TaskRepository`、`TaskService` 兩個 interface 產生的 mock（產生在 `internal/repository/mocks` 與 `internal/service/mocks`）。修改 interface 後，請重新產生：
+
+```bash
+go generate ./...
+```
+
+mockgen 以 `tool` 依賴的形式記錄在 `go.mod`，所以 `go generate` 會使用固定的版本，不需要另外安裝。產生的檔案有一併 commit，請勿手動修改。
+
 ## API
 
-一筆任務的格式為 `{"id": 1, "name": "buy milk", "status": 0}`，其中 `status` 為 `0`（未完成）或 `1`（已完成）。
+一筆任務的格式為 `{"id": 1, "name": "Preview PR", "status": 0}`，其中 `status` 為 `0`（未完成）或 `1`（已完成）。
 
 | 方法 | 路徑 | Body | 成功時回應 |
 |---|---|---|---|
@@ -70,11 +64,11 @@ service 與 controller 的測試使用 [mockgen](https://github.com/uber-go/mock
 
 Body 規則：`name` 為必填，最多 100 字元；`status` 可省略，只能是 `0` 或 `1`，預設為 `0`。`PUT` 會整筆覆蓋任務，因此省略 `status` 會將它設回 `0`。不接受未定義的欄位，body 大小上限為 1 MB。
 
-`DELETE` 是冪等的：它的意思是「確保這筆任務不存在」，所以即使任務從沒建立過或已經被刪除，也會回 `204`。這樣 client 在逾時後重試一個其實已經成功的刪除，會得到 `204`，而不是誤導人的 `404`。代價是刪除打錯的 id 時不會被提醒。`PUT` 遇到不存在的任務仍回 `404`，因為它是更新既有的任務，不是 upsert。
+`DELETE` 是冪等的：它的意思是「確保這筆任務不存在」，所以即使任務從沒建立過或已經被刪除，也會回 `204`。
 
 ### Trace ID
 
-每個回應都會帶有 `X-Trace-Id` header。如果請求帶了 `X-Trace-Id` header，就會沿用該值，方便和呼叫端的 log 對照；否則會產生一個新的 32 字元 hex id。只有在請求的值為 1～128 個字元、且只包含英數字與 `-`、`_`、`.` 時才會沿用（UUID 與 hex id 都符合）；其他值會被忽略並產生新的 id，因為 trace id 會原樣寫進 log 與回應 header。
+每個回應都會帶有 `X-Trace-Id` header。如果請求帶了 `X-Trace-Id` header，就會沿用該值，方便和呼叫端的 log 對照；否則會產生一個新的 32 字元 hex id。
 
 ### 錯誤
 
@@ -128,12 +122,15 @@ internal/
 └── trace/                       trace id 工具，以及自動加上 trace_id 的 slog handler
 ```
 
-請求的處理順序：`Trace → RateLimit → RouteErrors → router → controller → service → repository`。
+請求的處理順序：`[middleware：Trace → RateLimit → RouteErrors] → router → controller → service → repository`。
 
-- **依賴注入**：每個 `NewXxx` 都透過參數取得依賴，不會自己建立其他層的物件。`app.NewDependencyProvider` 由下往上建立所有元件。要把記憶體儲存換成資料庫，只需要寫一個新的 `TaskRepository` 實作，並修改 provider 裡的一行。測試則直接注入 mock（`service` 測試注入 mock repository，`controller` 測試注入 mock service）。
+- **路由**：使用標準庫的 `http.ServeMux`。Go 1.22 起它支援「方法 + 路徑參數」，例如 `"PUT /tasks/{id}"`，因此不需要 gin 之類的框架。
+- **依賴注入**：每個 `NewXxx` 都透過參數取得依賴，不會自己建立其他層的物件；`app.NewDependencyProvider` 由下往上建立所有元件。
+  - **替換儲存層**：要把記憶體儲存換成資料庫，只需要寫一個新的 `TaskRepository` 實作，並修改 provider 裡的一行。
+  - **測試**：直接注入 mock（`service` 測試注入 mock repository，`controller` 測試注入 mock service）。
 - **格式驗證與商業規則**：格式檢查是 `dto.TaskRequest` 上的 validator tag，由 controller 執行。商業規則則屬於 service。例如 repository 一律把找不到的任務回報為 `TASK_NOT_FOUND`，再由 service 決定：對 `Delete` 來說這算成功（冪等），對 `Update` 來說則是錯誤。
 - **錯誤處理**：各層回傳 `*model.AppError`，它只帶錯誤碼、不帶 HTTP status。`response.WriteError` 是唯一把錯誤轉成 JSON 的地方，並依 `response/errors.go` 的錯誤碼對照表決定 HTTP status。只會在 HTTP 層發生的錯誤（`INVALID_JSON`、`RATE_LIMITED` 等）定義在 `response`，因此 `model`、`service`、`repository` 都不知道 HTTP 的存在。其他非預期的錯誤一律回 500，並由 controller 寫進 log。
-- **限流**：以 `golang.org/x/time/rate` 對每個 client IP 做 token bucket 限流，閒置的項目每分鐘清理一次。使用的是連線的來源位址，而不是 `X-Forwarded-For`，因此 client 無法偽造；如果放在可信任的 proxy 後面，這部分需要調整。狀態存在記憶體中，所以限制是以單一 instance 計算。
+- **限流**：以 `golang.org/x/time/rate` 對每個 client IP 做 token bucket 限流，閒置的項目每分鐘清理一次。狀態存在記憶體中，所以限制是以單一 instance 計算。
 - **並行安全**：`MemoryTaskRepository` 以 `sync.RWMutex` 保護內部的 map；`TestCreate_ConcurrentCalls_StoresAllTasks` 搭配 `-race` 驗證這點。
 - **優雅關閉**：收到 SIGINT/SIGTERM 時，server 停止接受新連線，並最多等待 5 秒讓處理中的請求完成。
 - **Docker**：multi-stage build 產生精簡的 Alpine image，並以非 root 使用者執行。
