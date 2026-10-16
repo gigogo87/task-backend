@@ -33,7 +33,6 @@ func NewTaskController(svc service.TaskService, validate *validator.Validate, lo
 
 // List handles GET /tasks
 func (c *TaskController) List(w http.ResponseWriter, r *http.Request) {
-	c.logger.InfoContext(r.Context(), "[CTR IN] List")
 	tasks, err := c.service.List(r.Context())
 	if err != nil {
 		c.fail(w, r, err)
@@ -44,7 +43,6 @@ func (c *TaskController) List(w http.ResponseWriter, r *http.Request) {
 
 // Create handles POST /tasks
 func (c *TaskController) Create(w http.ResponseWriter, r *http.Request) {
-	c.logger.InfoContext(r.Context(), "[CTR IN] Create")
 	req, err := c.decodeAndValidate(w, r)
 	if err != nil {
 		c.fail(w, r, err)
@@ -61,7 +59,6 @@ func (c *TaskController) Create(w http.ResponseWriter, r *http.Request) {
 
 // Update handles PUT /tasks/{id}
 func (c *TaskController) Update(w http.ResponseWriter, r *http.Request) {
-	c.logger.InfoContext(r.Context(), "[CTR IN] Update")
 	id, err := c.parseID(r)
 	if err != nil {
 		c.fail(w, r, err)
@@ -83,7 +80,6 @@ func (c *TaskController) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete handles DELETE /tasks/{id}
 func (c *TaskController) Delete(w http.ResponseWriter, r *http.Request) {
-	c.logger.InfoContext(r.Context(), "[CTR IN] Delete")
 	id, err := c.parseID(r)
 	if err != nil {
 		c.fail(w, r, err)
