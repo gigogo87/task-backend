@@ -1,3 +1,4 @@
+// Package model defines the core data types and business errors shared by all layers.
 package model
 
 // Task status.

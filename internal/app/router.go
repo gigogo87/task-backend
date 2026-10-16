@@ -16,7 +16,7 @@ func newRouter(tasks *controller.TaskController, rateLimiter *middleware.RateLim
 	mux.HandleFunc("PUT /tasks/{id}", tasks.Update)
 	mux.HandleFunc("DELETE /tasks/{id}", tasks.Delete)
 
-	var h http.Handler = middleware.RouteErrors(mux) // must wrap the mux directly
+	h := middleware.RouteErrors(mux) // must wrap the mux directly
 	h = middleware.RateLimit(h, rateLimiter)
 	h = middleware.Trace(h)
 	return h

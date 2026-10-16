@@ -1,3 +1,4 @@
+// Package controller handles HTTP requests: it decodes and validates input, calls the service and writes JSON responses.
 package controller
 
 import (
@@ -18,6 +19,7 @@ import (
 
 const maxBodyBytes = 1 << 20 // cap request bodies at 1 MB
 
+// TaskController handles the /tasks endpoints.
 type TaskController struct {
 	service  service.TaskService
 	validate *validator.Validate

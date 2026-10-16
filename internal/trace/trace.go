@@ -1,3 +1,4 @@
+// Package trace manages the trace id of each request.
 package trace
 
 import (
@@ -42,9 +43,15 @@ func IsValidID(id string) bool {
 		return false
 	}
 	for _, c := range id {
-		if !('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || c == '-' || c == '_' || c == '.') {
+		if !isIDChar(c) {
 			return false
 		}
 	}
 	return true
+}
+
+// isIDChar reports whether c may appear in a trace id received from outside.
+func isIDChar(c rune) bool {
+	return 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' ||
+		c == '-' || c == '_' || c == '.'
 }

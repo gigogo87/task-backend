@@ -1,3 +1,4 @@
+// Package middleware holds the HTTP middleware wrapped around the router.
 package middleware
 
 import (

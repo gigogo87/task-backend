@@ -1,3 +1,4 @@
+// Package dto defines the API request shapes and their validation rules.
 package dto
 
 import "taskapi/internal/model"

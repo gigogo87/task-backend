@@ -12,10 +12,10 @@ import (
 // newRouteErrorsTestHandler builds a mux with two routes and wraps it in RouteErrors.
 func newRouteErrorsTestHandler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /x", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /x", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
-	mux.HandleFunc("GET /missing/{id}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /missing/{id}", func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "handler 404", http.StatusNotFound)
 	})
 	return RouteErrors(mux)

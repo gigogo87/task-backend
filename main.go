@@ -1,3 +1,4 @@
+// Package main runs the task API HTTP server.
 package main
 
 import (

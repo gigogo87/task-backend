@@ -1,3 +1,4 @@
+// Package response writes JSON and error responses in one consistent format.
 package response
 
 import (

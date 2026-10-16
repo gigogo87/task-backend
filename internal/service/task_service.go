@@ -1,3 +1,4 @@
+// Package service holds the business logic.
 package service
 
 import (
@@ -24,6 +25,7 @@ type taskService struct {
 	logger *slog.Logger
 }
 
+// NewTaskService creates a TaskService backed by repo.
 func NewTaskService(repo repository.TaskRepository, logger *slog.Logger) TaskService {
 	return &taskService{repo: repo, logger: logger}
 }

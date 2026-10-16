@@ -1,3 +1,4 @@
+// Package app wires all components together and builds the HTTP router.
 package app
 
 import (

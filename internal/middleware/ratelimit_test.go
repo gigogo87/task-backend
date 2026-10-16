@@ -16,7 +16,7 @@ const (
 )
 
 // okHandler stands for the next layer after the rate limiter: it returns 200 whenever called.
-var okHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+var okHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 })
 
