@@ -132,7 +132,7 @@ Request path: `[middleware: Trace → RateLimit → RouteErrors] → router → 
 - **Errors**: layers return `*model.AppError` values, which carry a code but no HTTP status. `response.WriteError` is the single place that turns them into JSON, using the code → status table in `response/errors.go`. Errors that only exist at the HTTP level (`INVALID_JSON`, `RATE_LIMITED`, ...) are defined in `response`, so `model`, `service` and `repository` know nothing about HTTP. Anything else becomes a 500 and is logged by the controller.
 - **Rate limiting**: token bucket per client IP using `golang.org/x/time/rate`, with idle entries cleaned up every minute. State is in memory, so limits are per instance.
 - **Concurrency**: `MemoryTaskRepository` guards its map with a `sync.RWMutex`; `TestCreate_ConcurrentCalls_StoresAllTasks` with `-race` checks this.
-- **Graceful shutdown**: on SIGINT/SIGTERM the server stops accepting connections and waits up to 5 s for in-flight requests.
+- **Graceful shutdown**: on SIGINT/SIGTERM the server stops accepting connections and waits up to 5 seconds for in-flight requests.
 - **Docker**: multi-stage build produces a small Alpine image that runs as a non-root user.
 
 ### What I would add for production
