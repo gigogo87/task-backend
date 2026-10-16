@@ -14,9 +14,14 @@ import (
 	"taskapi/internal/app"
 )
 
+// http.Server 預設沒有任何逾時：client 故意慢慢傳資料，就能一直佔住連線（Slowloris 攻擊）。
+// 這個 API 的 body 上限是 1 MB、handler 都是記憶體操作，所以下面的值都很寬鬆，正常請求不會被切斷。
 const (
-	// readHeaderTimeout 是讀取請求 header 的上限，避免 client 故意慢慢送 header 佔住連線（Slowloris 攻擊）。
-	readHeaderTimeout = 5 * time.Second
+	readHeaderTimeout = 5 * time.Second  // 讀完 header 的上限
+	readTimeout       = 10 * time.Second // 讀完整個請求的上限，包含最多 1 MB 的 body
+	writeTimeout      = 15 * time.Second // 從讀完請求到寫完回應的上限；必須比最慢的 handler 長
+	idleTimeout       = 60 * time.Second // keep-alive 連線閒置多久後關閉
+
 	// shutdownTimeout 是優雅關閉時最多等待處理中請求的時間。
 	// 要比平台送 SIGKILL 前的寬限期短（docker stop 預設 10 秒），關閉流程才跑得完。
 	shutdownTimeout = 5 * time.Second
@@ -38,6 +43,9 @@ func main() {
 		Addr:              ":" + cfg.Port,
 		Handler:           dp.Router,
 		ReadHeaderTimeout: readHeaderTimeout,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
 		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
