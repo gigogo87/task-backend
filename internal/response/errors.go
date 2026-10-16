@@ -6,7 +6,7 @@ import (
 	"taskapi/internal/model"
 )
 
-// 只會在 HTTP 層發生的錯誤：由 controller、router、middleware 回傳，service / repository 不會用到。
+// Errors that only exist at the HTTP level: returned by controllers, the router and middleware, never by the service or repository.
 var (
 	ErrInvalidJSON      = &model.AppError{Code: "INVALID_JSON", Message: "invalid JSON body"}
 	ErrInvalidID        = &model.AppError{Code: "INVALID_ID", Message: "id must be a positive integer"}
@@ -17,8 +17,8 @@ var (
 	ErrInternal         = &model.AppError{Code: "INTERNAL_ERROR", Message: "internal server error"}
 )
 
-// statusByCode 是錯誤碼對應 HTTP status 的唯一一張表。
-// 新增錯誤碼時記得加在這裡，否則會被當成 500（TestEveryErrorHasStatus 會抓到漏加的）。
+// statusByCode is the single table mapping error codes to HTTP statuses.
+// Add every new error code here, or it becomes a 500 (TestStatusByCode_AllDefinedErrors_HaveHTTPStatus catches omissions).
 var statusByCode = map[string]int{
 	model.ErrValidationFailed.Code: http.StatusBadRequest,
 	model.ErrTaskNotFound.Code:     http.StatusNotFound,

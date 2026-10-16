@@ -12,7 +12,7 @@ import (
 	"taskapi/internal/trace"
 )
 
-// echoTraceIDHandler 把 context 裡的 trace id 寫進 body，用來檢查 Trace 有沒有把 id 放進 context。
+// echoTraceIDHandler writes the context's trace id to the body, to check that Trace put the id in the context.
 var echoTraceIDHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(trace.FromContext(r.Context())))
 })

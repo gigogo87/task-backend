@@ -23,7 +23,6 @@ type decoded struct {
 	} `json:"error"`
 }
 
-// writeError 帶著 trace id "abc123" 呼叫 WriteError，回傳錄下的回應與解析後的 body。
 func writeError(t *testing.T, err error) (*httptest.ResponseRecorder, decoded) {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)

@@ -15,9 +15,7 @@ import (
 	"taskapi/internal/middleware"
 )
 
-// 整合測試：透過 DependencyProvider 組出完整的 router（middleware + controller + service + repository），跑一遍真實流程。
-
-// newTestRouter 建立完整組裝好的 router；測試結束時釋放 provider 的資源。
+// newTestRouter builds the fully wired router and releases the provider's resources when the test ends.
 func newTestRouter(t *testing.T, cfg Config) http.Handler {
 	t.Helper()
 	dp := NewDependencyProvider(cfg, io.Discard)
@@ -36,8 +34,8 @@ func doRequest(t *testing.T, h http.Handler, method, path, body string) *httptes
 	return rec
 }
 
-// createTask 透過 API 新增一筆任務，回傳 server 指派的 id。
-// 整合測試從回應取得 id，而不是假設 id 從幾開始，就像真正的 client 一樣。
+// createTask creates a task through the API and returns the id assigned by the server.
+// Like a real client, the tests take the id from the response instead of assuming where ids start.
 func createTask(t *testing.T, h http.Handler, name string) int {
 	t.Helper()
 	rec := doRequest(t, h, http.MethodPost, "/tasks", fmt.Sprintf(`{"name":%q}`, name))
@@ -66,7 +64,7 @@ func errorCode(t *testing.T, body []byte) string {
 	return resp.Error.Code
 }
 
-// ---------- 正常流程 ----------
+// ---------- Happy paths ----------
 
 func TestNewRouter_CreateUpdateDeleteThenList_ReturnsRemainingTask(t *testing.T) {
 	// Arrange
@@ -86,7 +84,6 @@ func TestNewRouter_CreateUpdateDeleteThenList_ReturnsRemainingTask(t *testing.T)
 	assert.JSONEq(t, want, rec.Body.String())
 }
 
-// DELETE 是冪等的：重試（例如第一次的回應在網路上遺失）也要得到成功。
 func TestNewRouter_DeleteSameTaskTwice_Returns204BothTimes(t *testing.T) {
 	// Arrange
 	h := newTestRouter(t, generousLimits)
@@ -150,13 +147,13 @@ func TestNewRouter_TaskNotFound_ReturnsErrorWithTraceIDMatchingHeader(t *testing
 	assert.Equal(t, rec.Header().Get(middleware.TraceIDHeader), resp.Error.TraceID, "trace_id in body should match X-Trace-Id header")
 }
 
-// ---------- 路由與 middleware ----------
+// ---------- Routing and middleware ----------
 
 func TestNewRouter_WrongMethod_Returns405WithAllowHeader(t *testing.T) {
 	tests := []struct {
 		method, path, wantAllow string
 	}{
-		{http.MethodPatch, "/tasks", "GET, HEAD, POST"}, // ServeMux 依字母排序
+		{http.MethodPatch, "/tasks", "GET, HEAD, POST"}, // ServeMux sorts methods alphabetically
 		{http.MethodGet, "/tasks/1", "DELETE, PUT"},
 	}
 	for _, tc := range tests {

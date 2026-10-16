@@ -1,4 +1,3 @@
-// Package response 放 controller、router 與 middleware 共用的 HTTP 回應工具，確保所有回應格式一致。
 package response
 
 import (
@@ -10,7 +9,7 @@ import (
 	"taskapi/internal/trace"
 )
 
-// errorResponse 是統一的錯誤格式：
+// errorResponse is the common error format:
 //
 //	{"error": {"code": "...", "message": "...", "details": [...], "trace_id": "..."}}
 type errorResponse struct {
@@ -24,16 +23,16 @@ type errorBody struct {
 	TraceID string             `json:"trace_id,omitempty"`
 }
 
-// WriteJSON 把 v 編碼成 JSON 回應。
+// WriteJSON writes v as a JSON response.
 func WriteJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// WriteError 把錯誤轉成統一格式的 JSON，HTTP status 由 statusByCode 決定。
-// 不是 *model.AppError、或錯誤碼沒有對應 status 的錯誤，一律當成 500，
-// 且不把原始訊息回給 client，避免洩漏內部資訊。
+// WriteError writes err in the common JSON format, with the HTTP status taken from statusByCode.
+// Anything that is not a *model.AppError, or whose code has no status, becomes a 500,
+// and its original message is not returned, so no internal details leak to the client.
 func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	appErr := ErrInternal
 	var target *model.AppError

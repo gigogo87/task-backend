@@ -8,20 +8,20 @@ import (
 	"taskapi/internal/model"
 )
 
-// 編譯期檢查：確保 MemoryTaskRepository 有實作 TaskRepository，少一個方法就會編譯失敗。
+// Compile-time check that MemoryTaskRepository implements TaskRepository.
 var _ TaskRepository = (*MemoryTaskRepository)(nil)
 
-// MemoryTaskRepository 用 map 把資料存在記憶體裡（程式重啟資料就會消失）。
+// MemoryTaskRepository keeps tasks in an in-memory map (data is lost when the program restarts).
 type MemoryTaskRepository struct {
-	mu     sync.RWMutex // HTTP server 會同時處理多個請求，map 不是並發安全的，所以要加鎖
+	mu     sync.RWMutex // maps are not goroutine-safe
 	tasks  map[int]model.Task
 	nextID int
 }
 
-// firstTaskID 是第一筆任務的 ID；之後每新增一筆就加 1（概念同 DB 的 auto increment）。
+// firstTaskID is the ID of the first task; each new task gets the next number.
 const firstTaskID = 1
 
-// NewMemoryTaskRepository 建立一個空的 MemoryTaskRepository。Go 慣例用 NewXxx 當建構函式。
+// NewMemoryTaskRepository creates an empty MemoryTaskRepository.
 func NewMemoryTaskRepository() *MemoryTaskRepository {
 	return &MemoryTaskRepository{
 		tasks:  make(map[int]model.Task),
@@ -29,9 +29,9 @@ func NewMemoryTaskRepository() *MemoryTaskRepository {
 	}
 }
 
-// List 回傳所有任務，依 ID 排序（map 的順序是隨機的，排序後結果才穩定、好測試）。
+// List returns all tasks sorted by ID.
 func (r *MemoryTaskRepository) List(_ context.Context) ([]model.Task, error) {
-	r.mu.RLock() // 讀取用讀鎖，多個讀者可以同時讀
+	r.mu.RLock() // read lock: multiple readers may read at the same time
 	defer r.mu.RUnlock()
 
 	result := make([]model.Task, 0, len(r.tasks))
@@ -42,9 +42,9 @@ func (r *MemoryTaskRepository) List(_ context.Context) ([]model.Task, error) {
 	return result, nil
 }
 
-// Create 新增任務，ID 由儲存層產生（概念同 DB 的 auto increment）。
+// Create adds a task; the storage layer assigns the ID.
 func (r *MemoryTaskRepository) Create(_ context.Context, t model.Task) (model.Task, error) {
-	r.mu.Lock() // 寫入用寫鎖，同一時間只有一個人能寫
+	r.mu.Lock() // write lock: only one writer at a time
 	defer r.mu.Unlock()
 
 	t.ID = r.nextID
@@ -53,7 +53,7 @@ func (r *MemoryTaskRepository) Create(_ context.Context, t model.Task) (model.Ta
 	return t, nil
 }
 
-// Update 以整筆覆蓋的方式更新指定 ID 的任務。
+// Update replaces the whole task with the given ID.
 func (r *MemoryTaskRepository) Update(_ context.Context, id int, t model.Task) (model.Task, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -61,12 +61,12 @@ func (r *MemoryTaskRepository) Update(_ context.Context, id int, t model.Task) (
 	if _, ok := r.tasks[id]; !ok {
 		return model.Task{}, model.ErrTaskNotFound
 	}
-	t.ID = id // 以參數的 id 為準，忽略 t 裡的 id
+	t.ID = id
 	r.tasks[id] = t
 	return t, nil
 }
 
-// Delete 刪除指定 ID 的任務。
+// Delete removes the task with the given ID.
 func (r *MemoryTaskRepository) Delete(_ context.Context, id int) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

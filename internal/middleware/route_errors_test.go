@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// newRouteErrorsTestHandler 建一個有兩條路由的 mux，並包上 RouteErrors。
+// newRouteErrorsTestHandler builds a mux with two routes and wraps it in RouteErrors.
 func newRouteErrorsTestHandler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /x", func(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +39,6 @@ func TestRouteErrors_MatchedRoute_PassesThroughToHandler(t *testing.T) {
 	assert.Equal(t, "ok", rec.Body.String())
 }
 
-// 有符合路由時，handler 自己回的 404（例如 TASK_NOT_FOUND）不能被改寫成 ROUTE_NOT_FOUND。
 func TestRouteErrors_HandlerReturns404_KeepsHandlerResponse(t *testing.T) {
 	// Arrange
 	h := newRouteErrorsTestHandler()

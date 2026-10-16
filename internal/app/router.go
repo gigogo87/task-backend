@@ -7,11 +7,8 @@ import (
 	"taskapi/internal/middleware"
 )
 
-// newRouter 註冊所有路由並串好 middleware，回傳整個 web server 的入口 handler。
-// Go 1.22 起，標準庫的 ServeMux 就支援「方法 + 路徑參數」，不用第三方套件。
-//
-// middleware 由內往外包，請求進來時則由外往內執行：Trace → RateLimit → RouteErrors → 路由 → controller。
-// Trace 放最外層，後面每一層（包含限流回 429）的錯誤回應才會有 trace_id。
+// newRouter registers all routes, chains the middleware and returns the entry handler of the web server.
+// Since Go 1.22 the standard library ServeMux supports method + path-parameter patterns, so no third-party router is needed.
 func newRouter(tasks *controller.TaskController, rateLimiter *middleware.RateLimiter) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /tasks", tasks.List)
@@ -19,7 +16,7 @@ func newRouter(tasks *controller.TaskController, rateLimiter *middleware.RateLim
 	mux.HandleFunc("PUT /tasks/{id}", tasks.Update)
 	mux.HandleFunc("DELETE /tasks/{id}", tasks.Delete)
 
-	var h http.Handler = middleware.RouteErrors(mux) // 必須直接包住 mux
+	var h http.Handler = middleware.RouteErrors(mux) // must wrap the mux directly
 	h = middleware.RateLimit(h, rateLimiter)
 	h = middleware.Trace(h)
 	return h

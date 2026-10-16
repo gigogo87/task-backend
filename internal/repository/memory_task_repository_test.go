@@ -112,7 +112,7 @@ func TestDelete_NonExistentID_ReturnsErrTaskNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, model.ErrTaskNotFound)
 }
 
-// 配合 `go test -race` 可抓出沒加鎖的問題。
+// Run with `go test -race` to catch missing locks.
 func TestCreate_ConcurrentCalls_StoresAllTasks(t *testing.T) {
 	// Arrange
 	const goroutines = 100

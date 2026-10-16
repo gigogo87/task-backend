@@ -1,48 +1,48 @@
-### GoLand 內建的 HTTP Client：每個請求左邊會有綠色 ▶，點下去就會送出
-### 先確定 server 已經在跑（執行 main.go）
+### GoLand's built-in HTTP Client: click the green ▶ to the left of a request to send it
+### Make sure the server is running first (run main.go)
 
-### 1. 新增任務
+### 1. Create a task
 POST http://localhost:8080/tasks
 Content-Type: application/json
 
 {"name": "Preview PR"}
 
-### 2. 再新增一筆
+### 2. Create another task
 POST http://localhost:8080/tasks
 Content-Type: application/json
 
 {"name": "Write release notes"}
 
-### 3. 列出全部
+### 3. List all tasks
 GET http://localhost:8080/tasks
 
-### 4. 把 id=1 標記為完成
+### 4. Mark id=1 as complete
 PUT http://localhost:8080/tasks/1
 Content-Type: application/json
 
 {"name": "Preview PR", "status": 1}
 
-### 5. 刪除 id=2
+### 5. Delete id=2
 DELETE http://localhost:8080/tasks/2
 
-### 6. 錯誤情境：更新不存在的任務 → 404
+### 6. Error: update a task that does not exist → 404
 PUT http://localhost:8080/tasks/999
 Content-Type: application/json
 
 {"name": "x"}
 
-### 7. 錯誤情境：name 是空的、status 不合法 → 400 VALIDATION_FAILED，details 會列出兩個欄位
+### 7. Error: empty name and invalid status → 400 VALIDATION_FAILED, with both fields listed in details
 POST http://localhost:8080/tasks
 Content-Type: application/json
 
 {"name": "", "status": 5}
 
-### 8. 帶 X-Trace-Id：回應的 X-Trace-Id 與錯誤裡的 trace_id 會沿用 my-trace-123
+### 8. Send X-Trace-Id: the response's X-Trace-Id and the error's trace_id reuse my-trace-123
 PUT http://localhost:8080/tasks/999
 Content-Type: application/json
 X-Trace-Id: my-trace-123
 
 {"name": "x"}
 
-### 9. 錯誤情境：方法不對 → 405 METHOD_NOT_ALLOWED，Allow header 列出可用的方法
+### 9. Error: wrong method → 405 METHOD_NOT_ALLOWED, with the allowed methods in the Allow header
 DELETE http://localhost:8080/tasks

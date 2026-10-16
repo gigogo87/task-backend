@@ -42,7 +42,7 @@ func TestIsValidID_UnacceptableID_ReturnsFalse(t *testing.T) {
 		{"contains space", "abc def"},
 		{"contains newline", "abc\ninjected log line"},
 		{"contains colon", "abc:def"},
-		{"non-ASCII", "追蹤123"},
+		{"non-ASCII", "café123"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

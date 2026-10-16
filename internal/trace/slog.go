@@ -5,8 +5,8 @@ import (
 	"log/slog"
 )
 
-// LogHandler 包住任何 slog.Handler，自動在每筆 log 加上 context 裡的 trace_id。
-// 各層只要用 logger.InfoContext(ctx, ...) 這類帶 ctx 的方法，就不需要自己傳 trace id。
+// LogHandler wraps any slog.Handler and adds the context's trace_id to every log record.
+// Layers only need to log with ctx-aware methods such as logger.InfoContext(ctx, ...); they never pass the trace id themselves.
 type LogHandler struct {
 	slog.Handler
 }
@@ -22,7 +22,6 @@ func (h *LogHandler) Handle(ctx context.Context, r slog.Record) error {
 	return h.Handler.Handle(ctx, r)
 }
 
-// WithAttrs、WithGroup 要回傳包好的 LogHandler，否則 logger.With(...) 之後就會失去 trace_id。
 func (h *LogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &LogHandler{Handler: h.Handler.WithAttrs(attrs)}
 }

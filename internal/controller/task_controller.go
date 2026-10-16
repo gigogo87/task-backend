@@ -1,5 +1,3 @@
-// Package controller 負責 HTTP 這一層：解析請求 → 驗證格式 → 呼叫 service → 把結果轉成 JSON 回應。
-// 路由註冊在 app/router.go。
 package controller
 
 import (
@@ -18,7 +16,7 @@ import (
 	"taskapi/internal/service"
 )
 
-const maxBodyBytes = 1 << 20 // 限制 body 最大 1MB，避免被塞爆
+const maxBodyBytes = 1 << 20 // cap request bodies at 1 MB
 
 type TaskController struct {
 	service  service.TaskService
@@ -26,12 +24,12 @@ type TaskController struct {
 	logger   *slog.Logger
 }
 
-// NewTaskController 透過參數注入所有依賴，測試時可以換成假的 service。
+// NewTaskController receives all its dependencies as parameters, so tests can pass a fake service.
 func NewTaskController(svc service.TaskService, validate *validator.Validate, logger *slog.Logger) *TaskController {
 	return &TaskController{service: svc, validate: validate, logger: logger}
 }
 
-// List 處理 GET /tasks
+// List handles GET /tasks
 func (c *TaskController) List(w http.ResponseWriter, r *http.Request) {
 	c.logger.InfoContext(r.Context(), "[CTR IN] List")
 	tasks, err := c.service.List(r.Context())
@@ -42,7 +40,7 @@ func (c *TaskController) List(w http.ResponseWriter, r *http.Request) {
 	response.WriteJSON(w, http.StatusOK, map[string]any{"result": tasks})
 }
 
-// Create 處理 POST /tasks
+// Create handles POST /tasks
 func (c *TaskController) Create(w http.ResponseWriter, r *http.Request) {
 	c.logger.InfoContext(r.Context(), "[CTR IN] Create")
 	req, err := c.decodeAndValidate(w, r)
@@ -59,7 +57,7 @@ func (c *TaskController) Create(w http.ResponseWriter, r *http.Request) {
 	response.WriteJSON(w, http.StatusCreated, map[string]any{"result": created})
 }
 
-// Update 處理 PUT /tasks/{id}
+// Update handles PUT /tasks/{id}
 func (c *TaskController) Update(w http.ResponseWriter, r *http.Request) {
 	c.logger.InfoContext(r.Context(), "[CTR IN] Update")
 	id, err := c.parseID(r)
@@ -81,7 +79,7 @@ func (c *TaskController) Update(w http.ResponseWriter, r *http.Request) {
 	response.WriteJSON(w, http.StatusOK, map[string]any{"result": updated})
 }
 
-// Delete 處理 DELETE /tasks/{id}
+// Delete handles DELETE /tasks/{id}
 func (c *TaskController) Delete(w http.ResponseWriter, r *http.Request) {
 	c.logger.InfoContext(r.Context(), "[CTR IN] Delete")
 	id, err := c.parseID(r)
@@ -94,12 +92,12 @@ func (c *TaskController) Delete(w http.ResponseWriter, r *http.Request) {
 		c.fail(w, r, err)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent) // 204：成功但沒有內容要回
+	w.WriteHeader(http.StatusNoContent) // 204: success with no body
 }
 
-// ---------- 以下是共用的小工具函式 ----------
+// ---------- Helpers ----------
 
-// parseID 從 URL 的 {id} 取出數字，並檢查必須是正整數。
+// parseID reads {id} from the URL and checks that it is a positive integer.
 func (c *TaskController) parseID(r *http.Request) (int, error) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id <= 0 {
@@ -108,16 +106,16 @@ func (c *TaskController) parseID(r *http.Request) (int, error) {
 	return id, nil
 }
 
-// decodeAndValidate 把 JSON body 解析成 dto.TaskRequest，再用 validator 檢查格式。
+// decodeAndValidate decodes the JSON body into a dto.TaskRequest and checks it with the validator.
 func (c *TaskController) decodeAndValidate(w http.ResponseWriter, r *http.Request) (dto.TaskRequest, error) {
 	var req dto.TaskRequest
 	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxBodyBytes))
-	dec.DisallowUnknownFields() // 多送奇怪欄位就報錯
+	dec.DisallowUnknownFields() // reject unknown fields
 	if err := dec.Decode(&req); err != nil {
 		return dto.TaskRequest{}, decodeBodyError(err)
 	}
-	// Decode 只會讀第一個 JSON 值；body 後面若還有內容（例如 {"name":"x"}garbage、兩個 JSON 物件），
-	// 也視為格式錯誤。只剩空白時第二次 Decode 會回 io.EOF，代表 body 已經讀完。
+	// Decode reads only the first JSON value; anything left after it (e.g. {"name":"x"}garbage or a second JSON object)
+	// is also malformed. If only whitespace remains, the second Decode returns io.EOF, meaning the body is fully read.
 	var extra json.RawMessage
 	if err := dec.Decode(&extra); !errors.Is(err, io.EOF) {
 		return dto.TaskRequest{}, decodeBodyError(err)
@@ -129,8 +127,8 @@ func (c *TaskController) decodeAndValidate(w http.ResponseWriter, r *http.Reques
 	return req, nil
 }
 
-// decodeBodyError 把解析 body 時的錯誤對應成 API 錯誤：超過大小上限回 PAYLOAD_TOO_LARGE，其他（包含 nil，
-// 也就是後面多出一個合法的 JSON 值）都是 INVALID_JSON。
+// decodeBodyError maps a body decoding error to an API error: PAYLOAD_TOO_LARGE when over the size limit, otherwise (including nil,
+// i.e. an extra valid JSON value after the body) INVALID_JSON.
 func decodeBodyError(err error) error {
 	var tooLarge *http.MaxBytesError
 	if errors.As(err, &tooLarge) {
@@ -139,7 +137,7 @@ func decodeBodyError(err error) error {
 	return response.ErrInvalidJSON
 }
 
-// fail 回傳錯誤回應。非預期的錯誤（不是 AppError）先寫進 log，因為回給 client 的只有 "internal server error"。
+// fail writes an error response. Unexpected errors (not an AppError) are logged first, because the client only sees "internal server error".
 func (c *TaskController) fail(w http.ResponseWriter, r *http.Request, err error) {
 	var appErr *model.AppError
 	if !errors.As(err, &appErr) {

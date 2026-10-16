@@ -7,28 +7,28 @@ import (
 	"strconv"
 )
 
-// 可以覆蓋設定的環境變數名稱。
+// Names of the environment variables that override the defaults.
 const (
 	envPort           = "PORT"
 	envRateLimitRPS   = "RATE_LIMIT_RPS"
 	envRateLimitBurst = "RATE_LIMIT_BURST"
 )
 
-// 沒有設定環境變數時使用的預設值。
+// Defaults used when the environment variables are not set.
 const (
 	defaultPort           = "8080"
-	defaultRateLimitRPS   = 10 // 每個 IP 每秒可以打幾次
-	defaultRateLimitBurst = 20 // 每個 IP 瞬間最多可以連打幾次
+	defaultRateLimitRPS   = 10 // requests per second allowed per IP
+	defaultRateLimitBurst = 20 // maximum burst of requests per IP
 )
 
-// Config 是程式的設定，全部可以用環境變數覆蓋（名稱與預設值見上方常數）。
+// Config holds the program settings; every field can be overridden by an environment variable.
 type Config struct {
 	Port           string
 	RateLimitRPS   float64
 	RateLimitBurst int
 }
 
-// LoadConfig 從環境變數讀設定；格式錯誤時回傳 error，讓程式在啟動時就失敗，而不是跑起來才出問題。
+// LoadConfig reads settings from the environment. Invalid values return an error, so the program fails at startup instead of misbehaving later.
 func LoadConfig() (Config, error) {
 	cfg := Config{
 		Port:           defaultPort,

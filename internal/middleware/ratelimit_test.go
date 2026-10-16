@@ -11,17 +11,15 @@ import (
 )
 
 const (
-	testBurst = 2     // 每個 IP 瞬間最多可以連打幾次
-	testRPS   = 0.001 // 幾乎不補 token：用完 burst 之後，測試期間不會再被放行
+	testBurst = 2     // maximum burst of requests per IP
+	testRPS   = 0.001 // almost no refill: once the burst is used, nothing more gets through during the test
 )
 
-// okHandler 代表限流之後的下一層：只要被呼叫就回 200。
+// okHandler stands for the next layer after the rate limiter: it returns 200 whenever called.
 var okHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 })
 
-// newRateLimitTestHandler 建一個 burst 為 testBurst、幾乎不補 token 的限流器：
-// 前 testBurst 次通過，之後一定被擋。
 func newRateLimitTestHandler(t *testing.T) http.Handler {
 	t.Helper()
 	rl := NewRateLimiter(testRPS, testBurst)
@@ -37,7 +35,7 @@ func sendFrom(h http.Handler, remoteAddr string) *httptest.ResponseRecorder {
 	return rec
 }
 
-// exhaustBurst 從同一個位址送出 testBurst 次請求，把該 IP 的額度用完。
+// exhaustBurst sends testBurst requests from one address, using up that IP's quota.
 func exhaustBurst(h http.Handler, remoteAddr string) {
 	for i := 0; i < testBurst; i++ {
 		sendFrom(h, remoteAddr)
@@ -75,7 +73,7 @@ func TestRateLimit_SameIPDifferentPort_SharesLimit(t *testing.T) {
 	// Arrange
 	h := newRateLimitTestHandler(t)
 	for i := 0; i < testBurst; i++ {
-		sendFrom(h, fmt.Sprintf("10.0.0.1:%d", 1000+i)) // 每次都換一個 port
+		sendFrom(h, fmt.Sprintf("10.0.0.1:%d", 1000+i)) // a different port each time
 	}
 
 	// Act

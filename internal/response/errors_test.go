@@ -8,7 +8,7 @@ import (
 	"taskapi/internal/model"
 )
 
-// 每個定義好的錯誤都要有對應的 HTTP status，漏加就會被當成 500。
+// Every defined error needs an HTTP status; a missing one would become a 500.
 func TestStatusByCode_AllDefinedErrors_HaveHTTPStatus(t *testing.T) {
 	// Arrange
 	all := []*model.AppError{

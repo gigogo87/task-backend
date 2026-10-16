@@ -1,5 +1,3 @@
-// Package trace 管理每個請求的 trace id。
-// 之後接 OpenTelemetry 等工具時，只需改這個 package。
 package trace
 
 import (
@@ -10,35 +8,35 @@ import (
 
 type ctxKey struct{}
 
-// NewContext 把 trace id 放進 context，讓之後的每一層都拿得到。
+// NewContext stores the trace id in the context so every later layer can read it.
 func NewContext(ctx context.Context, traceID string) context.Context {
 	return context.WithValue(ctx, ctxKey{}, traceID)
 }
 
-// FromContext 取出 trace id；沒有的話回傳空字串。
+// FromContext returns the trace id, or an empty string if there is none.
 func FromContext(ctx context.Context) string {
 	id, _ := ctx.Value(ctxKey{}).(string)
 	return id
 }
 
-// traceIDBytes 是產生 trace id 用的隨機位元組數。
+// traceIDBytes is the number of random bytes in a generated trace id.
 const traceIDBytes = 16
 
-// IDLength 是 NewID 產生的 trace id 長度：每個位元組編碼成 2 個 hex 字元。
+// IDLength is the length of ids from NewID: each byte encodes to 2 hex characters.
 const IDLength = traceIDBytes * 2
 
-// NewID 產生一個隨機的 trace id（IDLength 個小寫 hex 字元）。
+// NewID returns a random trace id of IDLength lowercase hex characters.
 func NewID() string {
 	var b [traceIDBytes]byte
-	_, _ = rand.Read(b[:]) // crypto/rand.Read 不會回傳錯誤
+	_, _ = rand.Read(b[:]) // crypto/rand.Read never returns an error
 	return hex.EncodeToString(b[:])
 }
 
 const maxIDLength = 128
 
-// IsValidID 檢查從外部（例如 request header）收到的 trace id 能不能沿用：
-// 不可為空、最長 128 字元，只能包含英數字與 '-'、'_'、'.'（UUID、hex 等常見格式都符合）。
-// trace id 會原樣寫進 log 與回應 header，限制格式可以避免被塞入換行偽造 log，或塞入超長字串。
+// IsValidID reports whether a trace id received from outside (e.g. a request header) may be reused:
+// it must be non-empty, at most 128 characters, and contain only letters, digits, '-', '_' or '.' (UUIDs and hex ids qualify).
+// The id is written verbatim to logs and response headers, so restricting it prevents forged log lines (via newlines) and huge values.
 func IsValidID(id string) bool {
 	if id == "" || len(id) > maxIDLength {
 		return false

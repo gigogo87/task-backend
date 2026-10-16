@@ -10,11 +10,10 @@ import (
 	"taskapi/internal/model"
 )
 
-// NewValidator 建立專案共用的 validator。
-// validator 會快取 struct 的解析結果，所以整個程式只建一個，由 dependency provider 注入。
+// NewValidator creates the validator shared by the whole project.
 func NewValidator() *validator.Validate {
 	v := validator.New(validator.WithRequiredStructEnabled())
-	// 錯誤訊息的欄位名稱改用 json tag（name），而不是 Go 的欄位名稱（Name），client 才看得懂。
+	// Report field names from the json tag (name) instead of the Go field name (Name), so clients understand them.
 	v.RegisterTagNameFunc(func(f reflect.StructField) string {
 		name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
 		if name == "-" {
@@ -28,8 +27,8 @@ func NewValidator() *validator.Validate {
 	return v
 }
 
-// ValidationError 把 validator 的錯誤轉成 VALIDATION_FAILED，並附上每個欄位的錯誤。
-// 不是 ValidationErrors 的錯誤（例如傳錯型別給 validator）代表程式寫錯，原樣回傳讓上層當成 500。
+// ValidationError turns validator errors into VALIDATION_FAILED with one detail per field.
+// Any other error (e.g. passing the wrong type to the validator) is a programming bug and is returned as-is, becoming a 500 upstream.
 func ValidationError(err error) error {
 	var ves validator.ValidationErrors
 	if !errors.As(err, &ves) {
